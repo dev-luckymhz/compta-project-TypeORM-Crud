@@ -1,0 +1,49 @@
+# Node.js
+node_modules/
+dist/
+build/
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Typescript
+*.tsbuildinfo
+
+# Debugging
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# IDEs
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+
+# npm packages
+package-lock.json
+yarn.lock
+
+# Output of build tools
+*.out
+*.exe
+*.log
+*.pid
+*.gz
+*.diff
+*.patch
+*.orig
+*.rej
+*.swp
+*.bak
+*.swp
+*.swo

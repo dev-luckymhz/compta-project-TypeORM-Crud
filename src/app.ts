@@ -13,7 +13,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 
 
 const app = express();
-const port = 3000;
+
 
 // Middleware configuration
 app.use(express.json());
@@ -33,13 +33,6 @@ app.use("/api/balance-sheets", balanceSheetRoutes);
 // Error handler middleware
 app.use(errorHandler);
 
+export default app;
+
 // Initialize Data Source and Start Server
-AppDataSource.initialize()
-    .then(() => {
-        app.listen(port, () => {
-            console.log(`Server is running on http://localhost:${port}`);
-        });
-    })
-    .catch((error) => {
-        console.error("Error during Data Source initialization", error);
-    });

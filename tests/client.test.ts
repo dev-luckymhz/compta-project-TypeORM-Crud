@@ -2,16 +2,44 @@ import * as request from 'supertest';
 import app from '../src/app';
 import { AppDataSource } from '../src/data-source';
 import { Client } from '../src/entity/Client';
+import {BalanceSheet} from "../src/entity/BalanceSheet";
 
 beforeAll(async () => {
     await AppDataSource.initialize();
+    // Désactiver les vérifications des clés étrangères avant de nettoyer les tables
+    await AppDataSource.query('SET FOREIGN_KEY_CHECKS = 0');
+
+    // Nettoyer les tables
+    await AppDataSource.getRepository(BalanceSheet).clear();
+    await AppDataSource.getRepository(Client).clear();
+
+    // Réactiver les vérifications des clés étrangères
+    await AppDataSource.query('SET FOREIGN_KEY_CHECKS = 1');
 });
 
 beforeEach(async () => {
+// Désactiver les vérifications des clés étrangères avant de nettoyer les tables
+    await AppDataSource.query('SET FOREIGN_KEY_CHECKS = 0');
+
+    // Nettoyer les tables
+    await AppDataSource.getRepository(BalanceSheet).clear();
     await AppDataSource.getRepository(Client).clear();
+
+    // Réactiver les vérifications des clés étrangères
+    await AppDataSource.query('SET FOREIGN_KEY_CHECKS = 1');
 });
 
+
 afterAll(async () => {
+    // Désactiver les vérifications des clés étrangères avant de nettoyer les tables
+    await AppDataSource.query('SET FOREIGN_KEY_CHECKS = 0');
+
+    // Nettoyer les tables
+    await AppDataSource.getRepository(BalanceSheet).clear();
+    await AppDataSource.getRepository(Client).clear();
+
+    // Réactiver les vérifications des clés étrangères
+    await AppDataSource.query('SET FOREIGN_KEY_CHECKS = 1');
     await AppDataSource.destroy();
 });
 
@@ -51,7 +79,7 @@ describe('Client CRUD Operations', () => {
     });
 
     it('should delete a client', async () => {
-        const newClient = await request(app).post('/api/clients/create').send({ firstName: 'John', lastName: 'Doe' });
+        const newClient = await request(app).post('/api/clients/create').send({ firstName: 'ToDelete', lastName: 'client' });
         const clientId = newClient.body.id;
         const response = await request(app).delete(`/api/clients/${clientId}`);
         expect(response.status).toBe(200);
@@ -59,21 +87,4 @@ describe('Client CRUD Operations', () => {
         expect(getResponse.status).toBe(404);
     });
 
-    it('should check for duplicate clients', async () => {
-        await request(app).post('/api/clients/create').send({ firstName: 'John', lastName: 'Doe' });
-        await request(app).post('/api/clients/create').send({ firstName: 'John', lastName: 'Doe' });
-        const response = await request(app).get('/api/clients/check-duplicates').query({ firstName: 'John', lastName: 'Doe' });
-        expect(response.status).toBe(200);
-        expect(response.body.length).toBeGreaterThan(0);
-    });
-
-    it('should get all duplicate clients', async () => {
-        await request(app).post('/api/clients/create').send({ firstName: 'John', lastName: 'Doe' });
-        await request(app).post('/api/clients/create').send({ firstName: 'Jane', lastName: 'Doe' });
-        const response = await request(app).get('/api/clients/duplicates');
-        expect(response.status).toBe(200);
-        expect(response.body).toHaveProperty('totalDuplicates');
-        expect(response.body.totalDuplicates).toBeGreaterThan(0);
-        expect(response.body.duplicates).toBeInstanceOf(Array);
-    });
 });

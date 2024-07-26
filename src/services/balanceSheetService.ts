@@ -23,6 +23,24 @@ export const getBalanceSheetService = async (clientId: number) => {
     }
 };
 
+export const getBalanceSheetWithClient = async (id: number) => {
+    try {
+        // Trouver le bilan par ID avec les informations du client
+        const balanceSheet = await balanceSheetRepository.findOne({
+            where: { id },
+            relations: ['client'] // Inclure les informations du client
+        });
+
+        if (!balanceSheet) {
+            return null; // Retourner null si le bilan n'est pas trouvé
+        }
+
+        return balanceSheet;
+    } catch (error) {
+        throw new Error(`Error fetching balance sheet: ${error.message}`);
+    }
+};
+
 export const createBalanceSheetService = async (clientId: number, year: number, result: number) => {
     try {
         // Vérifier si le client existe
@@ -52,14 +70,23 @@ export const createBalanceSheetService = async (clientId: number, year: number, 
 export const updateBalanceSheetService = async (id: number, year: number, result: number) => {
     try {
         // Trouver le bilan à mettre à jour
-        const balanceSheet = await balanceSheetRepository.findOneBy({ id });
+        const balanceSheet = await balanceSheetRepository.findOne({
+            where: { id },
+            relations: ['client'] // Inclure les informations du client pour vérifier les doublons
+        });
+
         if (!balanceSheet) {
             throw new Error("Balance sheet not found");
         }
 
         // Si l'année est modifiée, vérifier l'existence d'un bilan pour cette année pour le même client
         if (balanceSheet.year !== year) {
-            const duplicateSheet = await balanceSheetRepository.findOneBy({ client: balanceSheet.client, year });
+            const duplicateSheet = await balanceSheetRepository.findOne({
+                where: {
+                    client: balanceSheet.client,
+                    year
+                }
+            });
 
             if (duplicateSheet) {
                 throw new Error("Another balance sheet for this year already exists for this client.");

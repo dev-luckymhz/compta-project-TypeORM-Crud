@@ -119,12 +119,11 @@ export const getClientService = async (id: number) => {
             relations: ['balanceSheets'], // Inclut les bilans du client
         });
         if (!client) {
-            throw new Error('Client not found');
+            return null; // Retourner null si le client n'existe pas
         }
         return client;
     } catch (error) {
-        console.log(error)
-        throw new Error(`Failed to send email: ${error.message}`);
+        throw new Error(`Error fetching Client: ${error.message}`);
     }
 };
 

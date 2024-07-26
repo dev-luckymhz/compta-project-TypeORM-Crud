@@ -31,6 +31,12 @@ export const createBalanceSheetService = async (clientId: number, year: number, 
             throw new Error("Client not found");
         }
 
+        // Vérifier si un bilan existe déjà pour ce client et cette année
+        const existingSheet = await balanceSheetRepository.findOneBy({ client, year });
+        if (existingSheet) {
+            throw new Error("Balance sheet for this year already exists for this client.");
+        }
+
         // Créer un nouveau bilan
         const newBalanceSheet = new BalanceSheet();
         newBalanceSheet.year = year;
@@ -49,6 +55,15 @@ export const updateBalanceSheetService = async (id: number, year: number, result
         const balanceSheet = await balanceSheetRepository.findOneBy({ id });
         if (!balanceSheet) {
             throw new Error("Balance sheet not found");
+        }
+
+        // Si l'année est modifiée, vérifier l'existence d'un bilan pour cette année pour le même client
+        if (balanceSheet.year !== year) {
+            const duplicateSheet = await balanceSheetRepository.findOneBy({ client: balanceSheet.client, year });
+
+            if (duplicateSheet) {
+                throw new Error("Another balance sheet for this year already exists for this client.");
+            }
         }
 
         // Mettre à jour les informations du bilan

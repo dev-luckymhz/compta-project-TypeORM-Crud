@@ -41,6 +41,8 @@ export const checkDuplicateClients = async (firstName: string, lastName: string)
         throw new Error('Unknown error occurred while checking for duplicates');
     }
 };
+
+
 export const getClientService = async (id: number) => {
     try {
         // Trouver un client par son ID, incluant ses bilans s'il y en a
@@ -60,12 +62,6 @@ export const getClientService = async (id: number) => {
 
 export const createClientService = async (firstName: string, lastName: string) => {
     try {
-        const isDuplicate = await checkDuplicateClients(firstName, lastName);
-
-        if (isDuplicate) {
-            throw new Error('Duplicate client detected');
-        }
-
         const newClient = new Client();
         newClient.firstName = firstName;
         newClient.lastName = lastName;

@@ -10,9 +10,19 @@ export const checkAllDuplicateClients = async () => {
     try {
         // Retrieve all clients with their balance sheets
         const clients = await clientRepository.find({ relations: ['balanceSheets'] });
-        const duplicates = clients.reduce((acc, client) => {
-            const duplicateCount = clients.reduce((count, otherClient) => {
-                if (client.id === otherClient.id) return count;
+
+        const duplicates: {
+            client: Client;
+            duplicateWith: { client: Client; matchingBalanceSheets: BalanceSheet[] }[];
+            duplicateCount: number;
+        }[] = [];
+
+        let totalDuplicates = 0;
+
+        // Check for duplicates
+        for (const client of clients) {
+            const duplicateWith = clients.filter(otherClient => {
+                if (client.id === otherClient.id) return false;
 
                 const isDuplicate = client.firstName === otherClient.firstName &&
                     client.lastName === otherClient.lastName &&
@@ -22,17 +32,29 @@ export const checkAllDuplicateClients = async () => {
                         );
                     });
 
-                return isDuplicate ? count + 1 : count;
-            }, 0);
+                return isDuplicate;
+            });
 
-            if (duplicateCount > 0) {
-                acc.push({ clientId: client.id, duplicateCount });
+            if (duplicateWith.length > 0) {
+                const duplicateCount = duplicateWith.length;
+                totalDuplicates += duplicateCount;
+
+                duplicates.push({
+                    client,
+                    duplicateWith: duplicateWith.map(dupClient => ({
+                        client: dupClient,
+                        matchingBalanceSheets: dupClient.balanceSheets.filter(balanceSheet =>
+                            client.balanceSheets.some(
+                                clientBS => clientBS.year === balanceSheet.year && clientBS.result === balanceSheet.result
+                            )
+                        )
+                    })),
+                    duplicateCount
+                });
             }
+        }
 
-            return acc;
-        }, [] as { clientId: number, duplicateCount: number }[]);
-
-        return duplicates;
+        return { totalDuplicates, duplicates };
     } catch (error) {
         if (error instanceof Error) {
             throw new Error(`Error checking for duplicate clients: ${error.message}`);

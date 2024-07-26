@@ -6,7 +6,8 @@
     "build": "tsc",
     "start": "node dist/app.js",
     "dev": "nodemon --watch src --exec ts-node src/app.ts",
-    "test": "jest"
+    "test": "jest",
+    "seed": "ts-node ./src/seeder/databaseSeeder.ts"
   },
   "keywords": [],
   "author": "",

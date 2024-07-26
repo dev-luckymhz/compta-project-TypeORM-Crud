@@ -1,39 +1,85 @@
-import { AppDataSource } from '../data-source';
-import { Client } from '../entity/Client';
+import {AppDataSource} from '../data-source';
+import {Client} from '../entity/Client';
 import {BalanceSheet} from "../entity/BalanceSheet";
 
 const clientRepository = AppDataSource.getRepository(Client);
 const balanceSheetRepository = AppDataSource.getRepository(BalanceSheet);
 
+
+export const checkAllDuplicateClients = async () => {
+    try {
+        // Retrieve all clients with their balance sheets
+        const clients = await clientRepository.find({ relations: ['balanceSheets'] });
+        const duplicates = clients.reduce((acc, client) => {
+            const duplicateCount = clients.reduce((count, otherClient) => {
+                if (client.id === otherClient.id) return count;
+
+                const isDuplicate = client.firstName === otherClient.firstName &&
+                    client.lastName === otherClient.lastName &&
+                    client.balanceSheets.every(balanceSheet => {
+                        return otherClient.balanceSheets.some(
+                            otherBS => otherBS.year === balanceSheet.year && otherBS.result === balanceSheet.result
+                        );
+                    });
+
+                return isDuplicate ? count + 1 : count;
+            }, 0);
+
+            if (duplicateCount > 0) {
+                acc.push({ clientId: client.id, duplicateCount });
+            }
+
+            return acc;
+        }, [] as { clientId: number, duplicateCount: number }[]);
+
+        return duplicates;
+    } catch (error) {
+        if (error instanceof Error) {
+            throw new Error(`Error checking for duplicate clients: ${error.message}`);
+        }
+        throw new Error('Unknown error occurred while checking for duplicates');
+    }
+};
+
 export const checkDuplicateClients = async (firstName: string, lastName: string) => {
     try {
+        // Rechercher tous les clients ayant le même prénom et le même nom
         const clients = await clientRepository.find({
             where: { firstName, lastName },
             relations: ['balanceSheets']
         });
 
         if (clients.length === 0) {
-            return false;
+            return [];
         }
 
-        const isDuplicate = clients.some((client) => {
+        // Trouver les clients en doublon
+        const duplicates = clients.map(client => {
             const clientBalanceSheets = client.balanceSheets;
 
-            return clients.some(otherClient => {
-                if (client.id === otherClient.id) return false;
+            const duplicateCount = clients.reduce((count, otherClient) => {
+                if (client.id === otherClient.id) return count;
 
                 const otherClientBalanceSheets = otherClient.balanceSheets;
 
-                return clientBalanceSheets.every(balanceSheet => {
+                const isDuplicate = clientBalanceSheets.every(balanceSheet => {
                     const otherClientBalanceSheet = otherClientBalanceSheets.find(
                         bs => bs.year === balanceSheet.year
                     );
                     return otherClientBalanceSheet && otherClientBalanceSheet.result === balanceSheet.result;
                 });
-            });
+
+                return isDuplicate ? count + 1 : count;
+            }, 0);
+
+            return {
+                clientId: client.id,
+                duplicateCount
+            };
         });
 
-        return isDuplicate;
+        // Filtrer les résultats pour ne garder que les clients avec des doublons
+        return duplicates.filter(duplicate => duplicate.duplicateCount > 0);
     } catch (error) {
         if (error instanceof Error) {
             throw new Error(`Error checking for duplicate clients: ${error.message}`);

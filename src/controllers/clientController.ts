@@ -1,5 +1,13 @@
 import { Request, Response } from 'express';
-import { getClientService, createClientService, updateClientService, deleteClientService } from '../services/clientService';
+import {
+    getClientService,
+    createClientService,
+    updateClientService,
+    deleteClientService,
+    checkDuplicateClients, checkAllDuplicateClients
+} from '../services/clientService';
+
+
 
 export const getClient = async (req: Request, res: Response) => {
     const { id } = req.params;
@@ -12,6 +20,31 @@ export const getClient = async (req: Request, res: Response) => {
         }
     } catch (error) {
         res.status(500).json({ message: "Error fetching client", error });
+    }
+};
+
+
+export const checkAllDuplicateClientsController = async (req: Request, res: Response) => {
+    try {
+        const duplicates = await checkAllDuplicateClients();
+        res.status(200).json(duplicates);
+    } catch (error) {
+        res.status(500).json({ message: "Error checking for duplicate clients", error });
+    }
+};
+
+export const checkDuplicateClientsController = async (req: Request, res: Response) => {
+    const { firstName, lastName } = req.query;
+
+    try {
+        if (!firstName || !lastName) {
+            return res.status(400).json({ message: "First name and last name are required." });
+        }
+
+        const duplicates = await checkDuplicateClients(firstName as string, lastName as string);
+        res.status(200).json(duplicates);
+    } catch (error) {
+        res.status(500).json({ message: "Error checking for duplicate clients", error });
     }
 };
 

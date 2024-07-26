@@ -4,7 +4,7 @@ import { getBalanceSheets, createBalanceSheet, updateBalanceSheet, deleteBalance
 const router = Router();
 
 // Route pour récupérer la liste des bilans d'un client
-router.get('/:clientId', getBalanceSheets);
+router.get('/client/:clientId', getBalanceSheets);
 
 // Route pour créer un nouveau bilan pour un client
 router.post('/', createBalanceSheet);
